@@ -12,7 +12,7 @@ async function createDiagram(
 
 export function useCreateDiagram() {
   const { data, error, isMutating, trigger } = useSWRMutation(
-    '/api/diagram',
+    '/api/diagrams',
     createDiagram,
     {}
   );
