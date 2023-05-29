@@ -1,40 +1,40 @@
-import { Excalidraw } from "@excalidraw/excalidraw";
-import { ExcalidrawAPIRefValue } from "@excalidraw/excalidraw/types/types";
-import { FC, useState } from "react";
+import { Excalidraw } from '@excalidraw/excalidraw';
+import { ExcalidrawAPIRefValue } from '@excalidraw/excalidraw/types/types';
+import { FC, useState } from 'react';
 
 export const Board: FC<{ theme: string }> = ({ theme }) => {
-  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawAPIRefValue | null>(null);
+  const [excalidrawAPI, setExcalidrawAPI] =
+    useState<ExcalidrawAPIRefValue | null>(null);
 
   const getApi = async () => {
-    return excalidrawAPI?.readyPromise && await excalidrawAPI.readyPromise
-  }
+    return excalidrawAPI?.readyPromise && (await excalidrawAPI.readyPromise);
+  };
 
   const handleExport = async () => {
-    const api = await getApi()
+    const api = await getApi();
     if (api) {
-      const toSave = api.getSceneElements()
+      const toSave = api.getSceneElements();
 
-      localStorage.setItem('excalidraw', JSON.stringify(toSave))
+      localStorage.setItem('excalidraw', JSON.stringify(toSave));
     }
-  }
+  };
 
   const getStartValues = () => {
-    const savedString = localStorage.getItem('excalidraw')
+    const savedString = localStorage.getItem('excalidraw');
     if (savedString) {
-      return { elements: JSON.parse(savedString) }
+      return { elements: JSON.parse(savedString) };
     }
-    return null
-  }
-
+    return null;
+  };
 
   const handleImport = async () => {
-    const api = await getApi()
-    const startValues = getStartValues()
+    const api = await getApi();
+    const startValues = getStartValues();
 
     if (api && startValues) {
-      api.updateScene(startValues)
+      api.updateScene(startValues);
     }
-  }
+  };
 
   return (
     <>
@@ -42,7 +42,7 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
         <Excalidraw
           initialData={getStartValues()}
           theme={theme}
-          ref={(api) => setExcalidrawAPI(api)}
+          ref={api => setExcalidrawAPI(api)}
           renderTopRightUI={() => (
             <>
               <button onClick={handleImport}>Import</button>
@@ -53,4 +53,4 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
       }
     </>
   );
-}
+};
