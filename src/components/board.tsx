@@ -1,9 +1,20 @@
 import { useCreateDiagram } from '@/api/diagram';
 import { Excalidraw } from '@excalidraw/excalidraw';
-import { ExcalidrawAPIRefValue } from '@excalidraw/excalidraw/types/types';
-import { FC, useState } from 'react';
+import {
+  ExcalidrawAPIRefValue,
+  LibraryItemsSource,
+  ExcalidrawInitialDataState,
+} from '@excalidraw/excalidraw/types/types';
+import axios from 'axios';
+import { FC, useEffect, useState } from 'react';
+
+const DIAGRAM_KEY = 'excalidraw';
+const LIBRARY_KEY = 'excalidrawLibrary';
 
 export const Board: FC<{ theme: string }> = ({ theme }) => {
+  const qs = decodeURIComponent(document.location.hash);
+  const qsRegex = /addLibrary=(?<addLibrary>[^&]*)/;
+  const parsedQs = qs.match(qsRegex);
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawAPIRefValue | null>(null);
 
@@ -19,16 +30,28 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
       const toSave = api.getSceneElements();
 
       await trigger({ content: JSON.stringify(toSave), name: 'Test' });
-      localStorage.setItem('excalidraw', JSON.stringify(toSave));
+      localStorage.setItem(DIAGRAM_KEY, JSON.stringify(toSave));
     }
   };
 
-  const getStartValues = () => {
-    const savedString = localStorage.getItem('excalidraw');
-    if (savedString) {
-      return { elements: JSON.parse(savedString) };
+  const getStartValues = (): ExcalidrawInitialDataState => {
+    const values: ExcalidrawInitialDataState = {
+      elements: [],
+      libraryItems: [],
+    };
+
+    const savedDrawString = localStorage.getItem(DIAGRAM_KEY);
+    const savedLibraryString = localStorage.getItem(LIBRARY_KEY);
+
+    if (savedDrawString) {
+      values.elements = JSON.parse(savedDrawString);
     }
-    return null;
+
+    if (savedLibraryString) {
+      values.libraryItems = JSON.parse(savedLibraryString);
+    }
+
+    return values;
   };
 
   const handleImport = async () => {
@@ -36,9 +59,45 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
     const startValues = getStartValues();
 
     if (api && startValues) {
-      api.updateScene(startValues);
+      api.updateScene({ elements: startValues.elements });
     }
   };
+
+  const persistLibrary = (libraryItems: LibraryItemsSource) => {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify(libraryItems));
+  };
+
+  const handleAddLibrary = async (libraryItems: LibraryItemsSource) => {
+    const api = await getApi();
+    if (api) {
+      api.updateLibrary({
+        libraryItems,
+        merge: true,
+        openLibraryMenu: true,
+      });
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      if (!excalidrawAPI?.ready) {
+        return;
+      }
+
+      if (!parsedQs) {
+        return;
+      }
+
+      const addLibraryUrl = parsedQs.groups?.addLibrary;
+
+      if (addLibraryUrl) {
+        const lib = await axios.get<{ libraryItems: LibraryItemsSource }>(
+          addLibraryUrl
+        );
+        handleAddLibrary(lib.data.libraryItems);
+      }
+    })();
+  }, [excalidrawAPI?.ready]);
 
   return (
     <>
@@ -54,6 +113,7 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
               <button onClick={handleExport}>Export</button>
             </>
           )}
+          onLibraryChange={persistLibrary}
         />
       }
     </>
