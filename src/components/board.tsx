@@ -4,12 +4,14 @@ import {
   ExcalidrawAPIRefValue,
   LibraryItemsSource,
   ExcalidrawInitialDataState,
+  AppState,
 } from '@excalidraw/excalidraw/types/types';
 import axios from 'axios';
 import { FC, useEffect, useState } from 'react';
 
 const DIAGRAM_KEY = 'excalidraw';
 const LIBRARY_KEY = 'excalidrawLibrary';
+const STATE_KEY = 'excalidrawState';
 
 export const Board: FC<{ theme: string }> = ({ theme }) => {
   const qs = decodeURIComponent(document.location.hash);
@@ -38,10 +40,12 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
     const values: ExcalidrawInitialDataState = {
       elements: [],
       libraryItems: [],
+      appState: undefined,
     };
 
     const savedDrawString = localStorage.getItem(DIAGRAM_KEY);
     const savedLibraryString = localStorage.getItem(LIBRARY_KEY);
+    const savedAppState = localStorage.getItem(STATE_KEY);
 
     if (savedDrawString) {
       values.elements = JSON.parse(savedDrawString);
@@ -49,6 +53,17 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
 
     if (savedLibraryString) {
       values.libraryItems = JSON.parse(savedLibraryString);
+    }
+
+    if (savedAppState) {
+      const appState: AppState = JSON.parse(savedAppState);
+      values.appState = {
+        isSidebarDocked: appState.isSidebarDocked,
+        openSidebar: appState.openSidebar,
+        activeTool: appState.activeTool,
+        exportWithDarkMode: appState.exportWithDarkMode,
+        theme: appState.theme,
+      };
     }
 
     return values;
@@ -76,6 +91,10 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
         openLibraryMenu: true,
       });
     }
+  };
+
+  const persistState = (_: unknown, appState: AppState) => {
+    localStorage.setItem(STATE_KEY, JSON.stringify(appState));
   };
 
   useEffect(() => {
@@ -114,6 +133,7 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
             </>
           )}
           onLibraryChange={persistLibrary}
+          onChange={persistState}
         />
       }
     </>
