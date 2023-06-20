@@ -2,7 +2,8 @@ import { prisma, Prisma } from '@/database';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
-  return NextResponse.json(await prisma.diagram.findMany({ take: 100 }));
+  const response = await prisma.diagram.findMany({ take: 100 });
+  return NextResponse.json(response);
 }
 
 interface CreateDiagramRequest extends NextRequest {

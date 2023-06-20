@@ -1,4 +1,6 @@
 import useSWRMutation from 'swr/mutation';
+import useSWR from 'swr';
+import { Diagram } from '@prisma/client';
 
 async function createDiagram(
   url: string,
@@ -22,5 +24,27 @@ export function useCreateDiagram() {
     diagram: data,
     isMutating,
     isError: error,
+  };
+}
+
+async function listDiagrams(url: string) {
+  return fetch(url, {
+    method: 'GET',
+  }).then(res => res.json());
+}
+
+export function useListDiagram() {
+  const { data, error, isLoading } = useSWR<Diagram[]>(
+    '/api/diagrams',
+    listDiagrams,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  return {
+    diagrams: data,
+    isError: error,
+    isLoading,
   };
 }

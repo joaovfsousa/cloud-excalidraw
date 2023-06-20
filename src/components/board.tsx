@@ -8,6 +8,7 @@ import {
 } from '@excalidraw/excalidraw/types/types';
 import axios from 'axios';
 import { FC, useEffect, useState } from 'react';
+import { CustomSidebar } from './custom-sidebar';
 
 const DIAGRAM_KEY = 'excalidraw';
 const LIBRARY_KEY = 'excalidrawLibrary';
@@ -32,7 +33,6 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
       const toSave = api.getSceneElements();
 
       await trigger({ content: JSON.stringify(toSave), name: 'Test' });
-      localStorage.setItem(DIAGRAM_KEY, JSON.stringify(toSave));
     }
   };
 
@@ -69,12 +69,21 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
     return values;
   };
 
-  const handleImport = async () => {
+  const handleImport = async (startValues: ExcalidrawInitialDataState) => {
     const api = await getApi();
-    const startValues = getStartValues();
+
+    startValues = startValues ?? getStartValues();
 
     if (api && startValues) {
       api.updateScene({ elements: startValues.elements });
+    }
+  };
+
+  const toggleSidebar = async () => {
+    const api = await getApi();
+
+    if (api) {
+      api.toggleMenu('customSidebar');
     }
   };
 
@@ -116,7 +125,7 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
         handleAddLibrary(lib.data.libraryItems);
       }
     })();
-  }, [excalidrawAPI?.ready]);
+  }, [excalidrawAPI?.ready, parsedQs, handleAddLibrary]);
 
   return (
     <>
@@ -130,10 +139,12 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
             <>
               <button onClick={handleImport}>Import</button>
               <button onClick={handleExport}>Export</button>
+              <button onClick={toggleSidebar}>Open Sidebar</button>
             </>
           )}
           onLibraryChange={persistLibrary}
           onChange={persistState}
+          renderSidebar={() => <CustomSidebar handleImport={handleImport} />}
         />
       }
     </>
