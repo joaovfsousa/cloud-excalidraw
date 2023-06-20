@@ -7,7 +7,7 @@ import {
   AppState,
 } from '@excalidraw/excalidraw/types/types';
 import axios from 'axios';
-import { FC, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { CustomSidebar } from './custom-sidebar';
 
 const DIAGRAM_KEY = 'excalidraw';
@@ -23,9 +23,9 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
 
   const { trigger, isMutating } = useCreateDiagram();
 
-  const getApi = async () => {
+  const getApi = useCallback(async () => {
     return excalidrawAPI?.readyPromise && (await excalidrawAPI.readyPromise);
-  };
+  }, [excalidrawAPI]);
 
   const handleExport = async () => {
     const api = await getApi();
@@ -91,17 +91,6 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
     localStorage.setItem(LIBRARY_KEY, JSON.stringify(libraryItems));
   };
 
-  const handleAddLibrary = async (libraryItems: LibraryItemsSource) => {
-    const api = await getApi();
-    if (api) {
-      api.updateLibrary({
-        libraryItems,
-        merge: true,
-        openLibraryMenu: true,
-      });
-    }
-  };
-
   const persistState = (_: unknown, appState: AppState) => {
     localStorage.setItem(STATE_KEY, JSON.stringify(appState));
   };
@@ -118,6 +107,17 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
 
       const addLibraryUrl = parsedQs.groups?.addLibrary;
 
+      const handleAddLibrary = async (libraryItems: LibraryItemsSource) => {
+        const api = await getApi();
+        if (api) {
+          api.updateLibrary({
+            libraryItems,
+            merge: true,
+            openLibraryMenu: true,
+          });
+        }
+      };
+
       if (addLibraryUrl) {
         const lib = await axios.get<{ libraryItems: LibraryItemsSource }>(
           addLibraryUrl
@@ -125,7 +125,7 @@ export const Board: FC<{ theme: string }> = ({ theme }) => {
         handleAddLibrary(lib.data.libraryItems);
       }
     })();
-  }, [excalidrawAPI?.ready, parsedQs, handleAddLibrary]);
+  }, [excalidrawAPI?.ready, parsedQs, getApi]);
 
   return (
     <>
